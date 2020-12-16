@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+	echo "need argument"
+	exit 1
+fi
+
+name="$1"
+
+if [[ "$(podman ps --filter "name=^$name$" --format '{{.Names}}')" == "$name" ]]; then
+	podman exec -it -w /root "$name" bash
+elif [[ "$(podman ps -a --filter "name=^$name$" --format '{{.Names}}')" == "$name" ]]; then
+	podman start -ia "$name"
+else
+	mkdir -p "$HOME/.local/share/ccmux/sessions/$1"
+	podman run -it -w /root --name "$name" fedora bash
+fi
+
