@@ -5,14 +5,24 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-name="$1"
+NAME="$1"
 
-if [[ "$(podman ps --filter "name=^$name$" --format '{{.Names}}')" == "$name" ]]; then
-	podman exec -it -w /root "$name" bash
-elif [[ "$(podman ps -a --filter "name=^$name$" --format '{{.Names}}')" == "$name" ]]; then
-	podman start -ia "$name"
-else
-	mkdir -p "$HOME/.local/share/ccmux/sessions/$1"
-	podman run -it -w /root --name "$name" fedora bash
-fi
+# TODO: refresh command to recreate stopped container with new mounts?
+
+export SESSION_DIR="$HOME/.local/share/ccmux/sessions/$NAME"
+
+# name = ID
+# bashcompletion is files in :this: dir
+# symlink normalname and normalname.shardid.p1
+# also symlink to normal names
+
+mkdir -p "$SESSION_DIR"
+
+NEWHISTFILE=$SESSION_DIR/bash_history
+NEWKUBECONFIG=$SESSION_DIR/kubeconfig
+
+touch $NEWKUBECONFIG $NEWHISTFILE
+
+# todo: prompt based on the contents of KUBECONFIG; fallback to $NAME if lacking?
+exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export PS1='[\W \[\e[32m\]$NAME\[\e[m\]]\$ '")
 
