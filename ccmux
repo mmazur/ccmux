@@ -1,30 +1,56 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-	echo "need argument"
+	echo "Usage: ccmux CLUSTER"
 	exit 1
 fi
 
-NAME="$1"
+VAGUE_NAME="$1"
+CCMUX_DIR="$HOME/.local/share/ccmux"
+CCMUX_HELPERS_DIR="$CCMUX_DIR/helpers"
+CCMUX_SESSIONS_DIR="$CCMUX_DIR/sessions"
+export CCMUX_SESSION_DIR="$CCMUX_SESSIONS_DIR/$VAGUE_NAME"
+
+mkdir -p $CCMUX_DIR/sessions
+
+if [ ! -d "$CCMUX_SESSION_DIR" ]; then
+	if [ ${#VAGUE_NAME} != 32 -a ${#VAGUE_NAME} != 36 ]; then
+		echo "You must use internal or external cluster id the first time (for now)."
+		echo "Or try tab completion to get a unique cluster name."
+		exit 1
+	fi
+	RET=`ocm list clusters --managed --no-headers --padding 64 --columns 'name, dns.base_domain, id, external_id' --parameter search="id = '$VAGUE_NAME' or external_id = '$VAGUE_NAME'"`
+	if [ -z "$RET" ]; then
+		echo "Cluster with ID $VAGUE_NAME not found."
+		echo "You must use internal or external cluster id the first time (for now)."
+		echo "Or try tab completion to get a unique cluster name."
+		exit 1
+	fi
+	read NAME BASE_DOMAIN ID EXTERNAL_ID < <(echo "$RET")
+	FULLNAME="${NAME}.${BASE_DOMAIN}"
+	( cd $CCMUX_SESSIONS_DIR
+	  mkdir -p $ID
+	  rm -f $FULLNAME $EXTERNAL_ID
+	  ln -s $ID $FULLNAME
+	  ln -s $ID $EXTERNAL_ID
+	  echo $ID > $ID/id
+	  echo $EXTERNAL_ID > $ID/external_id
+	  echo $FULLNAME > $ID/fullname )
+fi
+
 
 # TODO: wget helpers if missing (kubeps1) https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
-
-CCMUX_DIR="$HOME/.local/share/ccmux"
-SESSION_DIR="$CCMUX_DIR/sessions/$NAME"
-HELPERS_DIR="$CCMUX_DIR/helpers"
 
 # name = ID
 # bashcompletion is files in sessions dir
 # symlink normalname and normalname.shardid.p1
 # also symlink to normal names
 
-mkdir -p "$SESSION_DIR"
-
-NEWHISTFILE=$SESSION_DIR/bash_history
-NEWKUBECONFIG=$SESSION_DIR/kubeconfig
+NEWHISTFILE=$CCMUX_SESSION_DIR/bash_history
+NEWKUBECONFIG=$CCMUX_SESSION_DIR/kubeconfig
 
 touch $NEWKUBECONFIG $NEWHISTFILE
 
-# todo: prompt based on the contents of KUBECONFIG; fallback to $NAME if lacking?
-exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; source $HELPERS_DIR/kube-ps1.sh; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
+# todo: swap kube_ps1 for something that uses session_dir/fullname? or supplement it somehow?
+exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
 
