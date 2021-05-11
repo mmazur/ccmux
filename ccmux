@@ -7,12 +7,14 @@ fi
 
 NAME="$1"
 
-# TODO: refresh command to recreate stopped container with new mounts?
+# TODO: wget helpers if missing (kubeps1) https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
 
-export SESSION_DIR="$HOME/.local/share/ccmux/sessions/$NAME"
+CCMUX_DIR="$HOME/.local/share/ccmux"
+SESSION_DIR="$CCMUX_DIR/sessions/$NAME"
+HELPERS_DIR="$CCMUX_DIR/helpers"
 
 # name = ID
-# bashcompletion is files in :this: dir
+# bashcompletion is files in sessions dir
 # symlink normalname and normalname.shardid.p1
 # also symlink to normal names
 
@@ -24,5 +26,5 @@ NEWKUBECONFIG=$SESSION_DIR/kubeconfig
 touch $NEWKUBECONFIG $NEWHISTFILE
 
 # todo: prompt based on the contents of KUBECONFIG; fallback to $NAME if lacking?
-exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export PS1='[\W \[\e[32m\]$NAME\[\e[m\]]\$ '")
+exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; source $HELPERS_DIR/kube-ps1.sh; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
 
