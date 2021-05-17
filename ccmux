@@ -26,15 +26,15 @@ if [ ! -d "$CCMUX_SESSION_DIR" ]; then
 		echo "Or try tab completion to get a unique cluster name."
 		exit 1
 	fi
-	read NAME BASE_DOMAIN ID EXTERNAL_ID < <(echo "$RET")
+	read NAME BASE_DOMAIN ID UUID < <(echo "$RET")
 	FULLNAME="${NAME}.${BASE_DOMAIN}"
 	( cd $CCMUX_SESSIONS_DIR
 	  mkdir -p $ID
-	  rm -f $FULLNAME $EXTERNAL_ID
+	  rm -f $FULLNAME $UUID
 	  ln -s $ID $FULLNAME
-	  ln -s $ID $EXTERNAL_ID
+	  ln -s $ID $UUID
 	  echo $ID > $ID/id
-	  echo $EXTERNAL_ID > $ID/external_id
+	  echo $UUID > $ID/uuid
 	  echo $FULLNAME > $ID/fullname )
 fi
 
@@ -48,9 +48,12 @@ fi
 
 NEWHISTFILE=$CCMUX_SESSION_DIR/bash_history
 NEWKUBECONFIG=$CCMUX_SESSION_DIR/kubeconfig
+ID=$(cat $CCMUX_SESSION_DIR/id)
+UUID=$(cat $CCMUX_SESSION_DIR/uuid)
 
 touch $NEWKUBECONFIG $NEWHISTFILE
 
+# TODO: put FULLNAME, ID and EXTERNAL ID in shell env, to be used in PS1 and commands?
 # todo: swap kube_ps1 for something that uses session_dir/fullname? or supplement it somehow?
-exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
+exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export ID=$ID; export UUID=$UUID; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
 
