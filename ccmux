@@ -1,11 +1,26 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-	echo "Usage: ccmux CLUSTER"
+
+if [ "$#" = 2 ]; then
+	OPT="$1"
+	VAGUE_NAME="$2"
+elif [ "$#" = 1 ]; then
+	VAGUE_NAME="$1"
+else
+	echo "Usage: ccmux [-f|--force] CLUSTER"
 	exit 1
 fi
 
-VAGUE_NAME="$1"
+if [ -n "$OPT" ]; then
+	if [ "$OPT" = "-f" -o "$OPT" = "--force" ]; then
+		OPT_FORCE="yes"
+	else
+		echo "Unrecognized option '$OPT'"
+		echo "Usage: ccmux [-f|--force] CLUSTER"
+		exit 1
+	fi
+fi
+
 CCMUX_DIR="$HOME/.local/share/ccmux"
 CCMUX_HELPERS_DIR="$CCMUX_DIR/helpers"
 CCMUX_SESSIONS_DIR="$CCMUX_DIR/sessions"
@@ -14,32 +29,45 @@ export CCMUX_SESSION_DIR="$CCMUX_SESSIONS_DIR/$VAGUE_NAME"
 mkdir -p $CCMUX_DIR/sessions
 
 if [ ! -d "$CCMUX_SESSION_DIR" ]; then
-	if [ ${#VAGUE_NAME} != 32 -a ${#VAGUE_NAME} != 36 ]; then
-		echo "You must use internal or external cluster id the first time (for now)."
-		echo "Or try tab completion to get a unique cluster name."
-		exit 1
+	if [ "$OPT_FORCE" = "yes" ]; then
+		( cd $CCMUX_SESSIONS_DIR
+		  mkdir -p $VAGUE_NAME
+		  touch $VAGUE_NAME/id $VAGUE_NAME/uuid $VAGUE_NAME/fullname )
+	else
+		if [ ${#VAGUE_NAME} != 32 -a ${#VAGUE_NAME} != 36 ]; then
+			echo "You must use internal or external cluster id the first time (for now)."
+			echo "Or try tab completion to get a unique cluster name."
+			exit 1
+		fi
+		RET=`ocm list clusters --managed --no-headers --padding 64 --columns 'name, dns.base_domain, id, external_id' --parameter search="id = '$VAGUE_NAME' or external_id = '$VAGUE_NAME'"`
+		if [ -z "$RET" ]; then
+			echo "Cluster with ID $VAGUE_NAME not found."
+			echo "You must use internal or external cluster id the first time (for now)."
+			echo "Or try tab completion to get a unique cluster name."
+			exit 1
+		fi
+		read NAME BASE_DOMAIN ID UUID < <(echo "$RET")
+		FULLNAME="${NAME}.${BASE_DOMAIN}"
+		( cd $CCMUX_SESSIONS_DIR
+		  mkdir -p $ID
+		  rm -f $FULLNAME $UUID
+		  ln -s $ID $FULLNAME
+		  ln -s $ID $UUID
+		  echo $ID > $ID/id
+		  echo $UUID > $ID/uuid
+		  echo $FULLNAME > $ID/fullname )
 	fi
-	RET=`ocm list clusters --managed --no-headers --padding 64 --columns 'name, dns.base_domain, id, external_id' --parameter search="id = '$VAGUE_NAME' or external_id = '$VAGUE_NAME'"`
-	if [ -z "$RET" ]; then
-		echo "Cluster with ID $VAGUE_NAME not found."
-		echo "You must use internal or external cluster id the first time (for now)."
-		echo "Or try tab completion to get a unique cluster name."
-		exit 1
-	fi
-	read NAME BASE_DOMAIN ID UUID < <(echo "$RET")
-	FULLNAME="${NAME}.${BASE_DOMAIN}"
-	( cd $CCMUX_SESSIONS_DIR
-	  mkdir -p $ID
-	  rm -f $FULLNAME $UUID
-	  ln -s $ID $FULLNAME
-	  ln -s $ID $UUID
-	  echo $ID > $ID/id
-	  echo $UUID > $ID/uuid
-	  echo $FULLNAME > $ID/fullname )
 fi
 
 
 # TODO: wget helpers if missing (kubeps1) https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
+#		if [ -e "$CCMUX_SESSION_DIR" ]; then
+#			echo "Name '$VAGUE_NAME' already exists, aborting."
+#			echo "If you want to get rid of it, run this command before trying again:"
+#			echo "    rm -rf \"$CCMUX_SESSION_DIR\""
+#			exit 1
+#		fi
+
 
 # name = ID
 # bashcompletion is files in sessions dir
