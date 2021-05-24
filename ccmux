@@ -21,10 +21,19 @@ if [ -n "$OPT" ]; then
 	fi
 fi
 
+
 CCMUX_DIR="$HOME/.local/share/ccmux"
 CCMUX_HELPERS_DIR="$CCMUX_DIR/helpers"
 CCMUX_SESSIONS_DIR="$CCMUX_DIR/sessions"
 export CCMUX_SESSION_DIR="$CCMUX_SESSIONS_DIR/$VAGUE_NAME"
+
+
+if [ ! -e "$CCMUX_HELPERS_DIR/kube-ps1.sh" ]; then
+	mkdir -p "$CCMUX_HELPERS_DIR"
+	echo -ne "Downloading kube-ps1 on first run of ccmux... "
+	curl -s https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh -o "$CCMUX_HELPERS_DIR/kube-ps1.sh" && echo "DONE."
+fi
+
 
 mkdir -p $CCMUX_DIR/sessions
 
@@ -60,7 +69,6 @@ if [ ! -d "$CCMUX_SESSION_DIR" ]; then
 fi
 
 
-# TODO: wget helpers if missing (kubeps1) https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
 #		if [ -e "$CCMUX_SESSION_DIR" ]; then
 #			echo "Name '$VAGUE_NAME' already exists, aborting."
 #			echo "If you want to get rid of it, run this command before trying again:"
