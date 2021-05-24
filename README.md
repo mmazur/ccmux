@@ -14,7 +14,7 @@ This is the config I have in my `.bashrc`. It assumes this repo is in `$HOME/dev
 ```
 source $HOME/dev/ccmux/bash_completion.sh
 
-complete -F _ccmux_completion cm
 alias cm=ccmux
+complete -F _ccmux_completion cm
 ```
 
