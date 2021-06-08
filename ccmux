@@ -41,7 +41,8 @@ if [ ! -d "$CCMUX_SESSION_DIR" ]; then
 	if [ "$OPT_FORCE" = "yes" ]; then
 		( cd $CCMUX_SESSIONS_DIR
 		  mkdir -p $VAGUE_NAME
-		  touch $VAGUE_NAME/id $VAGUE_NAME/uuid $VAGUE_NAME/fullname )
+		  touch $VAGUE_NAME/id $VAGUE_NAME/uuid
+		  echo $VAGUE_NAME > $VAGUE_NAME/fullname )
 	else
 		if [ ${#VAGUE_NAME} != 32 -a ${#VAGUE_NAME} != 36 ]; then
 			echo "You must use internal or external cluster id the first time (for now)."
@@ -91,5 +92,5 @@ touch $NEWKUBECONFIG $NEWHISTFILE
 
 # TODO: put FULLNAME, ID and EXTERNAL ID in shell env, to be used in PS1 and commands?
 # todo: swap kube_ps1 for something that uses session_dir/fullname? or supplement it somehow?
-exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export ID=$ID; export UUID=$UUID; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
+exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export ID=$ID; export UUID=$UUID; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export KUBE_PS1_SYMBOL_ENABLE=false; function get_cluster() { cat \$CCMUX_SESSION_DIR/fullname |cut -d. -f 1-3; }; KUBE_PS1_CLUSTER_FUNCTION=get_cluster; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
 
