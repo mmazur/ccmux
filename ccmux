@@ -68,7 +68,9 @@ if [ ! -d "$CCMUX_SESSION_DIR" ]; then
 		  echo $ID > $ID/id
 		  echo $UUID > $ID/uuid
 		  echo $FULLNAME > $ID/fullname )
-		echo -e 'Environment initialized. Run:\n  ocm backplane login $ID'
+		echo -e 'Environment initialized. Running: `ocm backplane login $ID`'
+		echo 'ocm backplane login $ID' >> "$CCMUX_SESSION_DIR/firstrun.sh"
+		echo 'rm -f $CCMUX_SESSION_DIR/firstrun.sh' >> "$CCMUX_SESSION_DIR/firstrun.sh"
 	fi
 fi
 
@@ -95,5 +97,5 @@ touch $NEWKUBECONFIG $NEWHISTFILE
 
 # TODO: put FULLNAME, ID and EXTERNAL ID in shell env, to be used in PS1 and commands?
 # todo: swap kube_ps1 for something that uses session_dir/fullname? or supplement it somehow?
-exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export ID=$ID; export UUID=$UUID; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export KUBE_PS1_SYMBOL_ENABLE=false; function get_cluster() { cat \$CCMUX_SESSION_DIR/fullname |cut -d. -f 1-3; }; KUBE_PS1_CLUSTER_FUNCTION=get_cluster; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '")
+exec bash --rcfile <(echo ". ~/.bashrc; HISTFILE=$NEWHISTFILE; export KUBECONFIG=$NEWKUBECONFIG; export ID=$ID; export UUID=$UUID; source $CCMUX_HELPERS_DIR/kube-ps1.sh; export KUBE_PS1_SYMBOL_ENABLE=false; function get_cluster() { cat \$CCMUX_SESSION_DIR/fullname |cut -d. -f 1-3; }; KUBE_PS1_CLUSTER_FUNCTION=get_cluster; export PS1='[\W \[\e[32m\]\$(kube_ps1)\[\e[m\]]\$ '; [ -f $CCMUX_SESSION_DIR/firstrun.sh ] && source $CCMUX_SESSION_DIR/firstrun.sh")
 
