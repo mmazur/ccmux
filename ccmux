@@ -67,7 +67,8 @@ if [ ! -d "$CCMUX_SESSION_DIR" ]; then
 		  ln -s $ID $UUID
 		  echo $ID > $ID/id
 		  echo $UUID > $ID/uuid
-		  echo $FULLNAME > $ID/fullname )
+		  echo $FULLNAME > $ID/fullname
+		  echo 'ocm backplane login $ID' > $ID/bash_history )
 		echo -e 'Environment initialized. Running: `ocm backplane login $ID`'
 		echo 'ocm backplane login $ID' >> "$CCMUX_SESSION_DIR/firstrun.sh"
 		echo 'rm -f $CCMUX_SESSION_DIR/firstrun.sh' >> "$CCMUX_SESSION_DIR/firstrun.sh"
