@@ -95,6 +95,7 @@ ID=$(cat $CCMUX_SESSION_DIR/id)
 UUID=$(cat $CCMUX_SESSION_DIR/uuid)
 
 touch $NEWKUBECONFIG $NEWHISTFILE
+chmod go-rwx $NEWKUBECONFIG
 
 # TODO: put FULLNAME, ID and EXTERNAL ID in shell env, to be used in PS1 and commands?
 # todo: swap kube_ps1 for something that uses session_dir/fullname? or supplement it somehow?
